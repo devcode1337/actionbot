@@ -1,30 +1,25 @@
-// ===== ИМПОРТЫ =====
 const { VK } = require('vk-io');
 const { HearManager } = require('@vk-io/hear');
 const { SessionManager } = require('@vk-io/session');
 const { SceneManager, StepScene } = require('@vk-io/scenes');
 const connectDB = require('./src/db/connection');
 const Auction = require('./src/db/models/auction');
-const User = require('./src/db/models/user'); // Добавляем импорт модели User
+const User = require('./src/db/models/user');
 const { isAdmin, delAuction } = require('./src/commands/auction');
 const { getRemainingTime } = require('./src/utils/timeFormatter');
-const { showProfile } = require('./src/commands/profile'); // Импортируем функцию профиля
+const { showProfile } = require('./src/commands/profile');
 const cron = require('node-cron');
 
-// ===== VK ИНИЦИАЛИЗАЦИЯ =====
 const vk = new VK({
     token: 'vk1.a.99cjuu9bSLjmCsDTtVMipdXYHXIMfUl72yjg9spVFIzSWxbt3_zeHznF9M2MPEJAGrkl8hFxL7ECLvSQcATpuRqGRL6Q2Fuy-zTJfpeQPwu_yMY74J__v_k2cyrjVhWxmj5mHIW00IyRgBtMtnnhd51QMZzEBq2rm8Pklnw0Txg5y8aL2rnwWF_4b8gGQSBh_BxTCgm-JhVyUC62f4k76w'
 });
 
-// ===== ПОДКЛЮЧЕНИЕ К БД =====
 connectDB();
 
-// ===== МЕНЕДЖЕРЫ =====
 const hearManager = new HearManager();
 const sessionManager = new SessionManager();
 const sceneManager = new SceneManager();
 
-// ===== СЦЕНЫ =====
 const addAuctionScene = new StepScene('add_auction', [
     async (ctx) => {
         if (ctx.scene.step.firstTime || !ctx.text) {
@@ -109,7 +104,6 @@ const addAuctionScene = new StepScene('add_auction', [
     }
 ]);
 
-// Простая сцена редактирования аукциона, чтобы команда !editauk работала
 const editAuctionScene = new StepScene('edit_auction', [
     async (ctx) => {
         let { auctionId } = ctx.scene.state;
@@ -198,13 +192,11 @@ const editAuctionScene = new StepScene('edit_auction', [
 
 sceneManager.addScenes([addAuctionScene, editAuctionScene]);
 
-// ===== MIDDLEWARES =====
 vk.updates.use(sessionManager.middleware);
 vk.updates.use(sceneManager.middleware);
 vk.updates.use(sceneManager.middlewareIntercept);
 vk.updates.use(hearManager.middleware);
 
-// ===== КОМАНДЫ =====
 hearManager.hear(/^!profile$/i, async (ctx) => {
     await showProfile(ctx);
 });
@@ -281,7 +273,6 @@ hearManager.hear(/^!editauk (\d+)$/i, async (ctx) => {
     return ctx.scene.enter('edit_auction', { auctionId });
 });
 
-// ===== КРОН-ПРОВЕРКА АУКЦИОНОВ =====
 cron.schedule('* * * * *', async () => {
     try {
         const now = new Date();
@@ -315,6 +306,5 @@ cron.schedule('* * * * *', async () => {
     }
 });
 
-// ===== ЗАПУСК =====
 vk.updates.start().catch(console.error);
 console.log('🤖 Бот запущен!');
